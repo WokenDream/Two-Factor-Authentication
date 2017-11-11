@@ -35,10 +35,11 @@ main(int argc, char * argv[])
 	printf("\nIssuer: %s\nAccount Name: %s\nSecret (Hex): %s\n\n",
 		issuer, accountName, secret_hex);
 
-	// Create an otpauth:// URI and display a QR code that's compatible
-	// with Google Authenticator
+	// get straight from lab handout hints
 	const char* encoded_issuer = urlEncode(issuer);
 	const char* encoded_accountname = urlEncode(accountName);
+
+	// concat each two consecutive hex chars in one byte
 	uint8_t* hex_bytes = hex_str_to_bytes(secret_hex);
 	uint8_t secret_base32[SECRET_LEN + 1] = {0}; // '\0' in the end is needed for "%s"
 	base32_encode(hex_bytes, 10, secret_base32, SECRET_LEN);
