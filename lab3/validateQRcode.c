@@ -7,7 +7,6 @@
 #include "lib/sha1.h"
 
 #define BLOCK_LEN 64
-#define KEY_LEN 20
 #define IPAD 0x36
 #define OPAD 0x5c
 
@@ -17,7 +16,7 @@ uint8_t hex_char_to_byte(char c) {
 
 uint8_t* hex_str_to_bytes(char* input) {
 	int i = 0;
-	const int len = KEY_LEN >> 1;
+	const int len = strlen(input) >> 1;
 	uint8_t* hex = malloc(len);
 	uint8_t upper, lower; // a hex need 4 bits
 	while (i < len) {
@@ -30,11 +29,11 @@ uint8_t* hex_str_to_bytes(char* input) {
 }
 
 // based on https://tools.ietf.org/pdf/rfc2104.pdf page 9
-uint8_t* HMAC_SHA_1(uint8_t* text, int text_len, uint8_t* key) {
+uint8_t* HMAC_SHA_1(uint8_t* text, int text_len, uint8_t* key, int key_len) {
 	uint8_t k_ipad[BLOCK_LEN + 1] = {0};
 	uint8_t k_opad[BLOCK_LEN + 1] = {0};
-	bcopy(key, k_ipad, KEY_LEN);
-	bcopy(key, k_opad, KEY_LEN);
+	bcopy(key, k_ipad, key_len);
+	bcopy(key, k_opad, key_len);
 
 	int i = 0;
 	for (i = 0; i < BLOCK_LEN; ++i) {
@@ -64,7 +63,7 @@ uint8_t* HMAC_SHA_1(uint8_t* text, int text_len, uint8_t* key) {
 /**
  * based on https://tools.ietf.org/pdf/rfc4226.pdf page 30
  */
-int computeOTP(uint8_t* key, uint64_t counter) {
+int computeOTP(uint8_t* key, int key_len, uint64_t counter) {
 	const int len = 8; // BLOCK_LEN / sizeof(byte)
 	uint8_t text[len];
 	int i = len - 1;
@@ -73,7 +72,7 @@ int computeOTP(uint8_t* key, uint64_t counter) {
 		counter >>= 8;
 		--i;
 	}
-	uint8_t *hash = HMAC_SHA_1(text, len, key);
+	uint8_t *hash = HMAC_SHA_1(text, len, key, key_len);
 	int offset = hash[SHA1_DIGEST_LENGTH - 1] & 0xf;
 	int binary = ((hash[offset] & 0x7f) << 24) |
 				 ((hash[offset + 1] & 0xff) << 16) |
@@ -86,7 +85,7 @@ static int
 validateHOTP(char * secret_hex, char * HOTP_string)
 {
 	uint8_t *key = hex_str_to_bytes(secret_hex);
-	int hotp = computeOTP(key, 1);
+	int hotp = computeOTP(key, strlen(secret_hex) >> 1, 1);
 	printf("hotp: %d\n", hotp);
 	return (hotp == atoi(HOTP_string));
 
@@ -115,7 +114,7 @@ static int
 validateTOTP(char * secret_hex, char * TOTP_string)
 {
 	uint8_t *key = hex_str_to_bytes(secret_hex);
-	int totp = computeOTP(key, time(NULL) / 30);
+	int totp = computeOTP(key, strlen(secret_hex) >> 1, time(NULL) / 30);
 	printf("totp: %d\n", totp);
 	return (totp == atoi(TOTP_string));
 }
