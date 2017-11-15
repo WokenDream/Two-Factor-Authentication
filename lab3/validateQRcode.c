@@ -87,7 +87,6 @@ validateHOTP(char * secret_hex, char * HOTP_string)
 {
 	uint8_t *key = hex_str_to_bytes(secret_hex);
 	int hotp = computeOTP(key, KEY_LEN >> 1, 1);
-	printf("hotp: %d\n", hotp);
 	return (hotp == atoi(HOTP_string));
 }
 
@@ -95,8 +94,7 @@ static int
 validateTOTP(char * secret_hex, char * TOTP_string)
 {
 	uint8_t *key = hex_str_to_bytes(secret_hex);
-	int totp = computeOTP(key, KEY_LEN >> 1, time(NULL) / 30);
-	printf("totp: %d\n", totp);
+	int totp = computeOTP(key, KEY_LEN >> 1, (uint64_t)time(NULL) / 30);
 	return (totp == atoi(TOTP_string));
 }
 
