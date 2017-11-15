@@ -7,6 +7,7 @@
 #include "lib/sha1.h"
 
 #define BLOCK_LEN 64
+#define KEY_LEN 20
 #define IPAD 0x36
 #define OPAD 0x5c
 
@@ -16,7 +17,7 @@ uint8_t hex_char_to_byte(char c) {
 
 uint8_t* hex_str_to_bytes(char* input) {
 	int i = 0;
-	const int len = strlen(input) >> 1;
+	const int len = KEY_LEN >> 1;
 	uint8_t* hex = malloc(len);
 	uint8_t upper, lower; // a hex need 4 bits
 	while (i < len) {
@@ -85,36 +86,16 @@ static int
 validateHOTP(char * secret_hex, char * HOTP_string)
 {
 	uint8_t *key = hex_str_to_bytes(secret_hex);
-	int hotp = computeOTP(key, strlen(secret_hex) >> 1, 1);
+	int hotp = computeOTP(key, KEY_LEN >> 1, 1);
 	printf("hotp: %d\n", hotp);
 	return (hotp == atoi(HOTP_string));
-
-	// const int len = 8; // BLOCK_LEN / sizeof(byte)
-	// uint64_t counter = 1; // hardcoded as in handout
-	// uint8_t text[len];
-	// int i = len - 1;
-	// while (i > -1) {
-	// 	text[i] = (uint8_t)(counter & 0xff);
-	// 	counter >>= 8;
-	// 	--i;
-	// }
-
-	// uint8_t *key = hex_str_to_bytes(secret_hex);
-	// uint8_t *hash = HMAC_SHA_1(text, len, key);
-	// int offset = hash[SHA1_DIGEST_LENGTH - 1] & 0xf;
-	// int binary = ((hash[offset] & 0x7f) << 24) |
-	// 			 ((hash[offset + 1] & 0xff) << 16) |
-	// 			 ((hash[offset + 2] & 0xff) << 8) |
-	// 			 (hash[offset + 3] & 0xff);
-	// int hotp = binary % 1000000; // assume 6 digit-code
-	// return hotp == atoi(HOTP_string);
 }
 
 static int
 validateTOTP(char * secret_hex, char * TOTP_string)
 {
 	uint8_t *key = hex_str_to_bytes(secret_hex);
-	int totp = computeOTP(key, strlen(secret_hex) >> 1, time(NULL) / 30);
+	int totp = computeOTP(key, KEY_LEN >> 1, time(NULL) / 30);
 	printf("totp: %d\n", totp);
 	return (totp == atoi(TOTP_string));
 }
